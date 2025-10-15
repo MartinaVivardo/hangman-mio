@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ahorcado / Hangman</title>
+  <style>
+    :root {
+      --bg: #0f172a;           /* slate-900 */
+      --panel: #111827;        /* gray-900 */
+      --muted: #94a3b8;        /* slate-400 */
+      --text: #e5e7eb;         /* gray-200 */
+      --accent: #22c55e;       /* green-500 */
+      --accent-2: #3b82f6;     /* blue-500 */
+      --danger: #ef4444;       /* red-500 */
+      --warning: #f59e0b;      /* amber-500 */
+      --card: #0b1220;         /* custom */
+      --btn: #1f2937;          /* gray-800 */
+      --btn-hover: #374151;    /* gray-700 */
+      --round: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 80% -10%, #1f2937 0%, var(--bg) 45%);
+      color: var(--text);
+      display: grid;
+      min-height: 100vh;
+      place-items: center;
+      padding: 24px;
+    }
+    .app {
+      width: min(960px, 100%);
+      display: grid;
+      gap: 16px;
+    }
+    .header {
+      display: grid; gap: 8px; justify-items: center; text-align: center;
+    }
+    h1 { margin: 0; font-size: clamp(1.4rem, 1.2rem + 1vw, 2rem); letter-spacing: .3px; }
+    .sub { color: var(--muted); font-size: .95rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 860px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--card), #0a0f1a);
+      border: 1px solid rgba(148,163,184,.15);
+      border-radius: var(--round);
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    .controls { display: grid; gap: 10px; }
+    .row { display: grid; gap: 10px; grid-template-columns: 1fr auto; align-items: center; }
+    .row.stacked { grid-template-columns: 1fr; }
+
+    input[type="password"], input[type="text"], select {
+      width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(148,163,184,.25);
+      background: #0b1322; color: var(--text); outline: none;
+    }
+    input::placeholder { color: #6b7280; }
+
+    .btn {
+      appearance: none; border: 1px solid rgba(148,163,184,.25); background: var(--btn); color: var(--text);
+      padding: 10px 14px; border-radius: 12px; cursor: pointer; font-weight: 600; letter-spacing: .2px;
+      transition: transform .02s ease, background .2s ease, border-color .2s ease;
+    }
+    .btn:hover { background: var(--btn-hover); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { background: var(--accent-2); border-color: transparent; }
+    .btn.primary:hover { filter: brightness(1.05); }
+    .btn.ghost { background: transparent; }
+    .btn.danger { background: #3a1010; border-color: rgba(239,68,68,.6); color: #fecaca; }
+
+    .status {
+      display: grid; gap: 8px; align-content: start;
+    }
+    .status .line { color: var(--muted); font-size: .95rem; }
+    .status strong { color: #f3f4f6; }
+
+    .word {
+      word-spacing: 10px;
+      font-variant-numeric: tabular-nums; letter-spacing: 4px; display: flex; flex-wrap: wrap; gap: 8px 10px;
+      justify-content: center; padding: 12px; background: #0a1020; border-radius: 12px; border: 1px dashed rgba(148,163,184,.25);
+      min-height: 54px; align-items: center;
+    }
+    .char { display: inline-block; min-width: 18px; text-align: center; font-size: 1.6rem; }
+    .char.placeholder { opacity: .35; }
+
+    .keyboard { display: grid; grid-template-columns: repeat(11, 1fr); gap: 8px; }
+    @media (max-width: 520px){ .keyboard { grid-template-columns: repeat(8, 1fr);} }
+    .key {
+      padding: 10px 0; background: #0e172a; border: 1px solid rgba(148,163,184,.25); border-radius: 10px; cursor: pointer;
+      font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #dbeafe;
+    }
+    .key:disabled { opacity: .5; cursor: not-allowed; }
+    .key.good { border-color: rgba(34,197,94,.6); background: rgba(34,197,94,.12); color: #bbf7d0; }
+    .key.bad { border-color: rgba(239,68,68,.6); background: rgba(239,68,68,.12); color: #fecaca; }
+
+    .result {
+      margin-top: 8px; padding: 10px 12px; border-radius: 10px; font-weight: 700; letter-spacing: .3px; display: none;
+    }
+    .result.show { display: block; }
+    .result.win { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.6); color: #bbf7d0; }
+    .result.lose { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.6); color: #fecaca; }
+
+    .list-wrong { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+    .badge { border: 1px solid rgba(239,68,68,.6); color: #fecaca; background: rgba(239,68,68,.12); padding: 3px 8px; border-radius: 999px; font-size: .9rem; }
+
+    .legend { font-size: .85rem; color: var(--muted); }
+    .footer { text-align: center; color: var(--muted); font-size: .9rem; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="header">
+      <h1>HANGMAN</h1>
+    </div>
+
+    <section class="grid">
+      <div class="card">
+        <div class="controls">
+          <div class="row">
+            <input id="customWord" type="password" placeholder="Palabra secreta (opcional, modo 2 jugadores)" />
+            <button id="btnStart" class="btn primary">Nuevo juego</button>
+          </div>
+          <div class="row">
+            <select id="difficulty">
+              <option value="6">Dificultad: 6 intentos</option>
+              <option value="7" selected>Dificultad: 7 intentos</option>
+              <option value="8">Dificultad: 8 intentos</option>
+            </select>
+            <button id="btnReveal" class="btn ghost" title="Mostrar/ocultar la palabra secreta">👁️</button>
+          </div>
+          <div class="legend">Sugerencia: deja el campo vacío para usar una palabra aleatoria.</div>
+        </div>
+
+        <div class="status" style="margin-top:12px;">
+          <div class="line">Intentos restantes: <strong id="tries">—</strong></div>
+          <div class="word" id="word"></div>
+          <div class="line">Letras incorrectas:</div>
+          <div class="list-wrong" id="wrong"></div>
+          <div id="result" class="result"></div>
+        </div>
+
+        <div id="keyboard" class="keyboard" style="margin-top:12px;"></div>
+        <div style="display:flex; gap:8px; margin-top:12px;">
+          <button id="btnReset" class="btn">Reiniciar</button>
+          <button id="btnGiveUp" class="btn danger">Rendirse</button>
+        </div>
+
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Reglas rápidas</h3>
+        <ol>
+          <li>Se elige una palabra (o se ingresa en secreto).</li>
+          <li>Probá letras. Si aciertas se revelan; si no, perdés un intento.</li>
+          <li>Ganás si descubrís toda la palabra antes de quedarte sin intentos.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ===== Utilidades de texto (acentos y espacios) =====
+    const mapBase = (s) => s
+      .toLowerCase()
+      .replace(/[áàäâ]/g, 'a')
+      .replace(/[éèëê]/g, 'e')
+      .replace(/[íìïî]/g, 'i')
+      .replace(/[óòöô]/g, 'o')
+      .replace(/[úùüû]/g, 'u')
+      .replace(/[^a-zñ\-\s]/g, ''); // conserva ñ, guión y espacio
+
+    const ABC = [
+      'a','b','c','d','e','f','g','h','i','j','k','l','m','n','ñ','o','p','q','r','s','t','u','v','w','x','y','z'
+    ];
+
+    const RANDOM_WORDS = [
+      'PROGRAMACIÓN','INTERNET','ARGENTINA','BIOLOGÍA','MATEMÁTICAS','AHORCADO','SOFTWARE','HARDWARE','ESCOLAR',
+      'FOTONOVELA','GEOGRAFÍA','PAMPEANA','INDUSTRIAL','TESORERÍA','ACALASIA','MOLECULA','PLANETA','HISTORIA',
+      'CIUDADANÍA','AMISTAD','DEPORTES','MÚSICA','TELEFONO','COMPUTADORA','JARDIN','TESORO','BANCO','DOLARES','DOCENTE'
+    ];
+
+    // ===== Estado del juego =====
+    let secretOriginal = '';
+    let secretBase = '';
+    let display = [];
+    let wrong = [];
+    let triesMax = 7;
+    let triesLeft = 7;
+    let finished = false;
+
+    const elWord = document.getElementById('word');
+    const elWrong = document.getElementById('wrong');
+    const elTries = document.getElementById('tries');
+    const elResult = document.getElementById('result');
+    const elKeyboard = document.getElementById('keyboard');
+    const elCustom = document.getElementById('customWord');
+    const elDiff = document.getElementById('difficulty');
+
+    // ===== Interfaz =====
+    function buildKeyboard(){
+      elKeyboard.innerHTML = '';
+      ABC.forEach(ch => {
+        const btn = document.createElement('button');
+        btn.className = 'key';
+        btn.textContent = ch;
+        btn.addEventListener('click', () => guess(ch));
+        elKeyboard.appendChild(btn);
+      });
+    }
+
+    function setKeysEnabled(on){
+      [...elKeyboard.querySelectorAll('.key')].forEach(b => b.disabled = !on);
+    }
+
+    function renderWord(){
+      elWord.innerHTML = '';
+      [...display].forEach((ch, i) => {
+        const span = document.createElement('span');
+        span.className = 'char' + (ch === '·' ? ' placeholder' : '');
+        span.textContent = ch === '·' ? '_' : ch;
+        elWord.appendChild(span);
+      });
+    }
+
+    function renderWrong(){
+      elWrong.innerHTML = '';
+      wrong.forEach(ch => {
+        const b = document.createElement('span');
+        b.className = 'badge';
+        b.textContent = ch;
+        elWrong.appendChild(b);
+      });
+    }
+
+    function resetKeyboardStyles(){
+      [...elKeyboard.querySelectorAll('.key')].forEach(b => {
+        b.classList.remove('good','bad'); b.disabled = false;
+      });
+    }
+
+    function setResult(type, msg){
+      elResult.className = 'result show ' + (type === 'win' ? 'win' : 'lose');
+      elResult.textContent = msg;
+    }
+
+    function clearResult(){ elResult.className = 'result'; elResult.textContent = ''; }
+
+    // ===== Lógica del juego =====
+    function pickRandom(){
+      const word = RANDOM_WORDS[Math.floor(Math.random()*RANDOM_WORDS.length)];
+      return word;
+    }
+
+    function start(){
+      finished = false; clearResult(); resetKeyboardStyles();
+      triesMax = parseInt(elDiff.value, 10) || 7; triesLeft = triesMax;
+
+      const raw = (elCustom.value || '').trim();
+      const chosen = raw.length ? raw : pickRandom();
+
+      secretOriginal = chosen.toUpperCase();
+      // Para comparar: se convierte a base (acentos fuera, ñ queda)
+      secretBase = mapBase(secretOriginal);
+
+      // Inicializar display con guiones bajos; espacios/guiones se revelan
+      display = [...secretOriginal].map(ch => {
+        if(/[\s\-]/.test(ch)) return ch; // muestra tal cual
+        return '·'; // marcador para pendiente
+      });
+
+      wrong = [];
+      elTries.textContent = `${triesLeft} / ${triesMax}`;
+      renderWord(); renderWrong();
+      setKeysEnabled(true);
+    }
+
+    function revealAll(){
+      display = [...secretOriginal];
+      renderWord();
+    }
+
+    function checkWin(){
+      const solved = display.every((ch, i) => {
+        if (/[\s\-]/.test(secretOriginal[i])) return true; // ignorar espacios/guiones
+        return ch !== '·';
+      });
+      if(solved){
+        finished = true; setKeysEnabled(false);
+        setResult('win', '¡Ganaste! La palabra era: ' + secretOriginal);
+      }
+    }
+
+    function checkLose(){
+      if(triesLeft <= 0){
+        finished = true; setKeysEnabled(false); revealAll();
+        setResult('lose', 'Perdiste. La palabra era: ' + secretOriginal);
+      }
+    }
+
+    function guess(letter){
+      if(finished) return;
+      const btn = [...elKeyboard.querySelectorAll('.key')].find(b => b.textContent === letter);
+      if(btn) btn.disabled = true;
+
+      const L = letter.toLowerCase();
+      const baseL = mapBase(L);
+
+      let hit = false;
+      // Revelar todas las posiciones que coinciden (comparando por base)
+      for(let i=0;i<secretOriginal.length;i++){
+        const baseChar = mapBase(secretOriginal[i]);
+        if(baseChar === baseL && display[i] === '·'){
+          display[i] = secretOriginal[i];
+          hit = true;
+        }
+      }
+
+      if(hit){
+        if(btn) btn.classList.add('good');
+        renderWord();
+        checkWin();
+      } else {
+        if(!wrong.includes(letter)) wrong.push(letter);
+        if(btn) btn.classList.add('bad');
+        triesLeft--; elTries.textContent = `${triesLeft} / ${triesMax}`;
+        renderWrong();
+        checkLose();
+      }
+    }
+
+    // ===== Eventos UI =====
+    document.getElementById('btnStart').addEventListener('click', start);
+    document.getElementById('btnReset').addEventListener('click', start);
+    document.getElementById('btnGiveUp').addEventListener('click', () => { revealAll(); finished = true; setKeysEnabled(false); setResult('lose', 'Te rendiste.'); });
+
+    let reveal = false;
+    document.getElementById('btnReveal').addEventListener('click', () => {
+      reveal = !reveal;
+      elCustom.type = reveal ? 'text' : 'password';
+    });
+
+    // Teclado físico
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if(k.length === 1){
+        // admitir letras y ñ (y vocales acentuadas como su base)
+        const candidate = mapBase(k);
+        if(candidate && /[a-zñ]/.test(candidate)){
+          // si presiona una vocal acentuada, candidate será su base; convertimos a la gráfica mostrada del teclado
+          const toPress = k === 'ñ' ? 'ñ' : candidate;
+          const already = [...elKeyboard.querySelectorAll('.key')].find(b => b.textContent === toPress && b.disabled);
+          if(!already){ guess(toPress); }
+        }
+      }
+      if(e.key === 'Enter'){ start(); }
+    });
+
+    // Render inicial
+    buildKeyboard();
+    start();
+  </script>
+</body>
+</html>
