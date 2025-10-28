@@ -72,3 +72,61 @@ button:hover {
     margin-top: 15px;
     background-color: #00b894;
 }
+/* ====== Selector de categoría / Controles ====== */
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0 16px;
+    flex-wrap: wrap;
+}
+
+.controls label {
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+#categorySelect {
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.25) inset;
+    cursor: pointer;
+    transition: transform .05s ease, background .2s ease;
+}
+
+#categorySelect:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+#categorySelect:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(162, 155, 254, .7);
+}
+
+#currentCategory {
+    background: rgba(0,0,0,.25);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+}
+@media (max-width: 540px) {
+    .container {
+        width: 90vw;
+        padding: 20px;
+    }
+    #word {
+        font-size: 24px;
+        letter-spacing: 4px;
+    }
+    input {
+        width: 100px;
+    }
+}

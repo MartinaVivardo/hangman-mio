@@ -12,6 +12,17 @@
     <div class="container">
         <h1>🎯 Juego del Ahorcado</h1>
 
+<div class="controls">
+  <label for="categorySelect">Categoría:</label>
+  <select id="categorySelect">
+    <option value="__random__">Aleatoria</option>
+    <option value="Animales">Animales</option>
+    <option value="Paises">Países</option>
+    <option value="Profesiones">Profesiones</option>
+  </select>
+  <span id="currentCategory" style="margin-left:8px; opacity:.8;"></span>
+</div>
+
         <div class="hangman">
             <pre id="hangman-figure">
 
